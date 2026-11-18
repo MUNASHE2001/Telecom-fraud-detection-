@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeleShield — Fraud Detection System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --surface: #0b1520;
+    --surface2: #0f1e2e;
+    --border: #1a2d42;
+    --border-bright: #1e3a52;
+    --accent: #00d4ff;
+    --accent2: #ff4d6d;
+    --accent3: #00ff9d;
+    --accent4: #ffb830;
+    --text: #c8dae8;
+    --text-dim: #5a7a94;
+    --text-bright: #e8f4ff;
+    --red: #ff4d6d;
+    --orange: #ffb830;
+    --green: #00ff9d;
+    --blue: #00d4ff;
+    --purple: #b06eff;
+    --grid: rgba(0,212,255,0.03);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 60px;
+    background: rgba(11,21,32,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 18px; font-weight: 800; letter-spacing: -0.5px;
+    color: var(--text-bright);
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo span { color: var(--accent); }
+  .topbar-center {
+    display: flex; gap: 4px;
+  }
+  .nav-btn {
+    padding: 6px 16px; border-radius: 6px;
+    background: transparent; border: none;
+    color: var(--text-dim); font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    background: rgba(0,212,255,0.08);
+    color: var(--accent);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    background: rgba(0,255,157,0.08);
+    border: 1px solid rgba(0,255,157,0.2);
+    font-size: 12px; font-weight: 600; color: var(--green);
+    font-family: 'Space Mono', monospace;
+  }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,157,0.4)} 50%{opacity:0.7;box-shadow:0 0 0 5px rgba(0,255,157,0)} }
+
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff; cursor: pointer;
+  }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; height: calc(100vh - 60px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: rgba(11,21,32,0.8);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    overflow-y: auto;
+  }
+  .sidebar-section {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--text-dim); padding: 10px 10px 4px;
+    text-transform: uppercase;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+    font-size: 13px; font-weight: 600; color: var(--text-dim);
+    border: 1px solid transparent;
+    position: relative;
+  }
+  .sidebar-item:hover { background: rgba(0,212,255,0.05); color: var(--text); }
+  .sidebar-item.active {
+    background: rgba(0,212,255,0.1);
+    border-color: rgba(0,212,255,0.2);
+    color: var(--accent);
+  }
+  .sidebar-item .icon { font-size: 15px; width: 20px; text-align: center; }
+  .badge {
+    margin-left: auto; padding: 2px 7px;
+    background: var(--red); border-radius: 10px;
+    font-size: 10px; font-weight: 700; color: #fff;
+    font-family: 'Space Mono', monospace;
+  }
+  .badge.orange { background: var(--orange); color: #000; }
+  .badge.blue { background: rgba(0,212,255,0.2); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title {
+    font-size: 20px; font-weight: 800; color: var(--text-bright);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title span { color: var(--accent); }
+  .section-sub { font-size: 13px; color: var(--text-dim); margin-top: 3px; font-family: 'Space Mono', monospace; }
+
+  /* ── KPI CARDS ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--border-bright); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.red::before { background: var(--red); }
+  .kpi-card.orange::before { background: var(--orange); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.blue::before { background: var(--blue); }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .kpi-value { font-size: 32px; font-weight: 800; color: var(--text-bright); margin: 6px 0 4px; line-height: 1; font-family: 'Space Mono', monospace; }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.orange { color: var(--orange); }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.blue { color: var(--blue); }
+  .kpi-delta { font-size: 12px; color: var(--text-dim); }
+  .kpi-delta .up { color: var(--red); }
+  .kpi-delta .dn { color: var(--green); }
+  .kpi-icon {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    font-size: 32px; opacity: 0.12;
+  }
+
+  /* ── GRID ROW ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; color: var(--text-bright);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .card-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-red { background: var(--red); }
+  .dot-orange { background: var(--orange); }
+  .dot-green { background: var(--green); }
+  .dot-blue { background: var(--blue); }
+  .dot-purple { background: var(--purple); }
+
+  /* ── CHART PLACEHOLDER ── */
+  .chart-area {
+    height: 180px; position: relative; overflow: hidden;
+    border-radius: 8px;
+  }
+  .chart-bars {
+    display: flex; align-items: flex-end; gap: 6px;
+    height: 100%; padding: 10px 0;
+  }
+  .bar-group { flex: 1; display: flex; gap: 2px; align-items: flex-end; }
+  .bar {
+    flex: 1; border-radius: 3px 3px 0 0;
+    opacity: 0.85; transition: opacity 0.2s;
+    min-height: 4px;
+  }
+  .bar:hover { opacity: 1; }
+  .bar.sim { background: linear-gradient(180deg, var(--red), rgba(255,77,109,0.3)); }
+  .bar.smish { background: linear-gradient(180deg, var(--orange), rgba(255,184,48,0.3)); }
+  .bar.sub { background: linear-gradient(180deg, var(--purple), rgba(176,110,255,0.3)); }
+  .bar.wan { background: linear-gradient(180deg, var(--blue), rgba(0,212,255,0.3)); }
+
+  .chart-line-area {
+    height: 140px; position: relative;
+  }
+  .chart-line-area svg { width: 100%; height: 100%; }
+
+  /* ── ALERT FEED ── */
+  .alert-list { display: flex; flex-direction: column; gap: 8px; }
+  .alert-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    transition: all 0.2s; cursor: pointer;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-8px) } to { opacity:1; transform:translateX(0) } }
+  .alert-item:hover { border-color: var(--border-bright); background: rgba(15,30,46,0.9); }
+  .alert-item.crit { border-left-color: var(--red); }
+  .alert-item.high { border-left-color: var(--orange); }
+  .alert-item.med { border-left-color: var(--purple); }
+  .alert-item.low { border-left-color: var(--blue); }
+  .alert-badge {
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .badge-crit { background: rgba(255,77,109,0.15); color: var(--red); border: 1px solid rgba(255,77,109,0.3); }
+  .badge-high { background: rgba(255,184,48,0.15); color: var(--orange); border: 1px solid rgba(255,184,48,0.3); }
+  .badge-med { background: rgba(176,110,255,0.15); color: var(--purple); border: 1px solid rgba(176,110,255,0.3); }
+  .badge-low { background: rgba(0,212,255,0.1); color: var(--blue); border: 1px solid rgba(0,212,255,0.2); }
+  .alert-content { flex: 1; min-width: 0; }
+  .alert-title { font-size: 13px; font-weight: 600; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .alert-meta { font-size: 11px; color: var(--text-dim); font-family: 'Space Mono', monospace; margin-top: 2px; }
+  .alert-score {
+    font-size: 14px; font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  /* ── FRAUD TYPE BREAKDOWN ── */
+  .fraud-types { display: flex; flex-direction: column; gap: 12px; }
+  .fraud-type-row { display: flex; align-items: center; gap: 10px; }
+  .fraud-type-label { width: 120px; font-size: 12px; font-weight: 600; color: var(--text); flex-shrink: 0; }
+  .fraud-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+  .fraud-bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+  .fraud-type-pct { width: 36px; font-size: 12px; font-weight: 700; color: var(--text-dim); text-align: right; font-family: 'Space Mono', monospace; }
+
+  /* ── MODEL METRICS ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .metric-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; text-align: center;
+  }
+  .metric-box .val {
+    font-size: 22px; font-weight: 800; color: var(--green);
+    font-family: 'Space Mono', monospace;
+  }
+  .metric-box .lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+
+  /* ── SHAP BARS ── */
+  .shap-list { display: flex; flex-direction: column; gap: 8px; }
+  .shap-row { display: flex; align-items: center; gap: 8px; }
+  .shap-feat { width: 160px; font-size: 11px; color: var(--text); flex-shrink: 0; font-family: 'Space Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shap-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; }
+  .shap-fill { height: 100%; border-radius: 6px; }
+  .shap-fill.pos { background: linear-gradient(90deg, var(--red), rgba(255,77,109,0.5)); }
+  .shap-fill.neg { background: linear-gradient(90deg, var(--blue), rgba(0,212,255,0.5)); }
+  .shap-val { width: 50px; font-size: 10px; color: var(--text-dim); text-align: right; font-family: 'Space Mono', monospace; }
+
+  /* ── DATA INGESTION STATUS ── */
+  .ingestion-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .ing-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; text-align: center;
+  }
+  .ing-card .ing-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.7px; }
+  .ing-card .ing-rate { font-size: 20px; font-weight: 800; font-family: 'Space Mono', monospace; color: var(--accent); margin: 6px 0 4px; }
+  .ing-card .ing-sub { font-size: 10px; color: var(--text-dim); }
+  .ing-indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 4px; animation: pulse 2s infinite; }
+
+  /* ── TABLE ── */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .tbl th {
+    text-align: left; padding: 8px 12px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    color: var(--text-dim); text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+  }
+  .tbl td {
+    padding: 10px 12px; border-bottom: 1px solid rgba(26,45,66,0.5);
+    color: var(--text); vertical-align: middle;
+  }
+  .tbl tr:hover td { background: rgba(0,212,255,0.03); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .fraud-tag {
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+  .tag-sim { background: rgba(255,77,109,0.15); color: var(--red); }
+  .tag-smish { background: rgba(255,184,48,0.15); color: var(--orange); }
+  .tag-sub { background: rgba(176,110,255,0.15); color: var(--purple); }
+  .tag-wan { background: rgba(0,212,255,0.1); color: var(--blue); }
+
+  .conf-bar { display: flex; align-items: center; gap: 6px; }
+  .conf-track { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 3px; }
+  .conf-fill { height: 100%; border-radius: 3px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  /* ── BUTTON ── */
+  .btn {
+    padding: 7px 16px; border-radius: 7px; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+    transition: all 0.2s;
+  }
+  .btn-ghost {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--border-bright); color: var(--text); }
+  .btn-primary {
+    background: rgba(0,212,255,0.12); color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.25);
+  }
+  .btn-primary:hover { background: rgba(0,212,255,0.2); }
+
+  /* ── TIME LABEL ── */
+  .time-label { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+  /* ── SCANLINE EFFECT ── */
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    Tele<span>Shield</span>
+  </div>
+  <div class="topbar-center">
+    <button class="nav-btn active">Dashboard</button>
+    <button class="nav-btn">Alerts</button>
+    <button class="nav-btn">Investigations</button>
+    <button class="nav-btn">Reports</button>
+    <button class="nav-btn">Models</button>
+    <button class="nav-btn">Settings</button>
+  </div>
+  <div class="topbar-right">
+    <div class="status-pill"><span class="pulse"></span>LIVE</div>
+    <span class="time-label" id="clock">—</span>
+    <div class="avatar">AD</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Detection</div>
+    <div class="sidebar-item active"><span class="icon">📊</span>Overview</div>
+    <div class="sidebar-item"><span class="icon">📱</span>SIM Box <span class="badge">14</span></div>
+    <div class="sidebar-item"><span class="icon">💬</span>Smishing <span class="badge orange">9</span></div>
+    <div class="sidebar-item"><span class="icon">🔐</span>Subscription <span class="badge">5</span></div>
+    <div class="sidebar-item"><span class="icon">📞</span>Wangiri <span class="badge blue">3</span></div>
+
+    <div class="sidebar-section">Analysis</div>
+    <div class="sidebar-item"><span class="icon">🧠</span>Behavioural Profiles</div>
+    <div class="sidebar-item"><span class="icon">🔬</span>SHAP Explainability</div>
+    <div class="sidebar-item"><span class="icon">🌲</span>Random Forest</div>
+
+    <div class="sidebar-section">Data</div>
+    <div class="sidebar-item"><span class="icon">📡</span>CDR Ingestion</div>
+    <div class="sidebar-item"><span class="icon">📨</span>SMS Logs</div>
+    <div class="sidebar-item"><span class="icon">📋</span>Subscriptions</div>
+
+    <div class="sidebar-section">System</div>
+    <div class="sidebar-item"><span class="icon">📁</span>Audit Log</div>
+    <div class="sidebar-item"><span class="icon">⚙️</span>Configuration</div>
+    <div class="sidebar-item"><span class="icon">👥</span>Admin Users</div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="section-header">
+      <div>
+        <div class="section-title">Fraud Detection <span>Overview</span></div>
+        <div class="section-sub">Last updated: <span id="lastUpdate">—</span> &nbsp;|&nbsp; All data sources active</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost">Export Report</button>
+        <button class="btn btn-primary">+ New Investigation</button>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="kpi-row">
+      <div class="kpi-card red">
+        <div class="kpi-label">Critical Alerts Today</div>
+        <div class="kpi-value red" id="kpi1">31</div>
+        <div class="kpi-delta"><span class="up">↑ 12%</span> vs yesterday</div>
+        <div class="kpi-icon">🚨</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-label">CDRs Processed / hr</div>
+        <div class="kpi-value orange">284K</div>
+        <div class="kpi-delta"><span class="dn">↓ 2%</span> vs last hour</div>
+        <div class="kpi-icon">📡</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Model Accuracy</div>
+        <div class="kpi-value green">97.4%</div>
+        <div class="kpi-delta"><span class="dn">↑ 0.2%</span> this week</div>
+        <div class="kpi-icon">🎯</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">Accounts Flagged</div>
+        <div class="kpi-value blue">148</div>
+        <div class="kpi-delta"><span class="up">↑ 8</span> since 08:00</div>
+        <div class="kpi-icon">🔍</div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Chart + Alerts -->
+    <div class="grid-3">
+
+      <!-- Fraud Events Over 7 Days -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-blue"></span>Fraud Events — Last 7 Days</div>
+        <div class="chart-area">
+          <div class="chart-bars">
+            <!-- Mon -->
+            <div class="bar-group"><div class="bar sim" style="height:55%"></div><div class="bar smish" style="height:30%"></div><div class="bar sub" style="height:20%"></div><div class="bar wan" style="height:15%"></div></div>
+            <!-- Tue -->
+            <div class="bar-group"><div class="bar sim" style="height:62%"></div><div class="bar smish" style="height:45%"></div><div class="bar sub" style="height:25%"></div><div class="bar wan" style="height:10%"></div></div>
+            <!-- Wed -->
+            <div class="bar-group"><div class="bar sim" style="height:48%"></div><div class="bar smish" style="height:38%"></div><div class="bar sub" style="height:30%"></div><div class="bar wan" style="height:20%"></div></div>
+            <!-- Thu -->
+            <div class="bar-group"><div class="bar sim" style="height:78%"></div><div class="bar smish" style="height:55%"></div><div class="bar sub" style="height:18%"></div><div class="bar wan" style="height:25%"></div></div>
+            <!-- Fri -->
+            <div class="bar-group"><div class="bar sim" style="height:65%"></div><div class="bar smish" style="height:50%"></div><div class="bar sub" style="height:35%"></div><div class="bar wan" style="height:12%"></div></div>
+            <!-- Sat -->
+            <div class="bar-group"><div class="bar sim" style="height:40%"></div><div class="bar smish" style="height:60%"></div><div class="bar sub" style="height:28%"></div><div class="bar wan" style="height:18%"></div></div>
+            <!-- Sun (today) -->
+            <div class="bar-group"><div class="bar sim" style="height:85%"></div><div class="bar smish" style="height:70%"></div><div class="bar sub" style="height:42%"></div><div class="bar wan" style="height:30%"></div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim)"><div style="width:10px;height:10px;border-radius:2px;background:var(--red)"></div>SIM Box</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim)"><div style="width:10px;height:10px;border-radius:2px;background:var(--orange)"></div>Smishing</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim)"><div style="width:10px;height:10px;border-radius:2px;background:var(--purple)"></div>Subscription</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim)"><div style="width:10px;height:10px;border-radius:2px;background:var(--blue)"></div>Wangiri</div>
+        </div>
+      </div>
+
+      <!-- Live Alert Feed -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-red" style="animation:pulse 1.5s infinite"></span>Live Alert Feed</div>
+        <div class="alert-list" id="alertFeed">
+          <div class="alert-item crit">
+            <div class="alert-badge badge-crit">CRITICAL</div>
+            <div class="alert-content">
+              <div class="alert-title">SIM Box — Account +254712***421</div>
+              <div class="alert-meta">2 min ago · 847 intl calls · Isolation Forest flagged</div>
+            </div>
+            <div class="alert-score" style="color:var(--red)">0.96</div>
+          </div>
+          <div class="alert-item high">
+            <div class="alert-badge badge-high">HIGH</div>
+            <div class="alert-content">
+              <div class="alert-title">Smishing Campaign — Batch ID #SM-4471</div>
+              <div class="alert-meta">8 min ago · 1,240 SMS · 3 suspect URLs</div>
+            </div>
+            <div class="alert-score" style="color:var(--orange)">0.89</div>
+          </div>
+          <div class="alert-item crit">
+            <div class="alert-badge badge-crit">CRITICAL</div>
+            <div class="alert-content">
+              <div class="alert-title">Subscription Fraud — Device 98A:2F:…</div>
+              <div class="alert-meta">14 min ago · 6 activations in 4 min</div>
+            </div>
+            <div class="alert-score" style="color:var(--red)">0.94</div>
+          </div>
+          <div class="alert-item med">
+            <div class="alert-badge badge-med">MEDIUM</div>
+            <div class="alert-content">
+              <div class="alert-title">Wangiri — Prefix +881 cluster</div>
+              <div class="alert-meta">31 min ago · 320 missed-call attempts</div>
+            </div>
+            <div class="alert-score" style="color:var(--purple)">0.77</div>
+          </div>
+          <div class="alert-item low">
+            <div class="alert-badge badge-low">LOW</div>
+            <div class="alert-content">
+              <div class="alert-title">Behavioural Anomaly — Account #99812</div>
+              <div class="alert-meta">1 hr ago · Deviation from 30-day baseline</div>
+            </div>
+            <div class="alert-score" style="color:var(--blue)">0.61</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Fraud Breakdown + Model Metrics + SHAP -->
+    <div style="display:grid;grid-template-columns:1.2fr 1fr 1.3fr;gap:16px">
+
+      <!-- Fraud Type Distribution -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-purple"></span>Fraud Type Distribution</div>
+        <div class="fraud-types">
+          <div class="fraud-type-row">
+            <div class="fraud-type-label">SIM Box</div>
+            <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:62%;background:var(--red)"></div></div>
+            <div class="fraud-type-pct">62%</div>
+          </div>
+          <div class="fraud-type-row">
+            <div class="fraud-type-label">Smishing</div>
+            <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:21%;background:var(--orange)"></div></div>
+            <div class="fraud-type-pct">21%</div>
+          </div>
+          <div class="fraud-type-row">
+            <div class="fraud-type-label">Subscription</div>
+            <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:11%;background:var(--purple)"></div></div>
+            <div class="fraud-type-pct">11%</div>
+          </div>
+          <div class="fraud-type-row">
+            <div class="fraud-type-label">Wangiri</div>
+            <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:6%;background:var(--blue)"></div></div>
+            <div class="fraud-type-pct">6%</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div class="card-title" style="margin-bottom:10px"><span class="dot dot-green"></span>Data Ingestion</div>
+          <div class="ingestion-grid">
+            <div class="ing-card">
+              <div class="ing-label">CDR</div>
+              <div class="ing-rate">4.7K<span style="font-size:11px;color:var(--text-dim)">/s</span></div>
+              <div class="ing-sub"><span class="ing-indicator"></span>Live</div>
+            </div>
+            <div class="ing-card">
+              <div class="ing-label">SMS</div>
+              <div class="ing-rate">1.2K<span style="font-size:11px;color:var(--text-dim)">/s</span></div>
+              <div class="ing-sub"><span class="ing-indicator"></span>Live</div>
+            </div>
+            <div class="ing-card">
+              <div class="ing-label">Subscr.</div>
+              <div class="ing-rate">312<span style="font-size:11px;color:var(--text-dim)">/s</span></div>
+              <div class="ing-sub"><span class="ing-indicator"></span>Live</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model Performance -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-green"></span>Random Forest — Performance</div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="val">97.4%</div>
+            <div class="lbl">Accuracy</div>
+          </div>
+          <div class="metric-box">
+            <div class="val">96.1%</div>
+            <div class="lbl">Precision</div>
+          </div>
+          <div class="metric-box">
+            <div class="val">95.8%</div>
+            <div class="lbl">Recall</div>
+          </div>
+          <div class="metric-box">
+            <div class="val" style="color:var(--accent)">96.0%</div>
+            <div class="lbl">F1 Score</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Per-Category Confidence</div>
+          <div class="fraud-types">
+            <div class="fraud-type-row">
+              <div class="fraud-type-label" style="font-size:11px;width:90px">SIM Box</div>
+              <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:98%;background:var(--red)"></div></div>
+              <div class="fraud-type-pct" style="color:var(--red)">0.98</div>
+            </div>
+            <div class="fraud-type-row">
+              <div class="fraud-type-label" style="font-size:11px;width:90px">Smishing</div>
+              <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:95%;background:var(--orange)"></div></div>
+              <div class="fraud-type-pct" style="color:var(--orange)">0.95</div>
+            </div>
+            <div class="fraud-type-row">
+              <div class="fraud-type-label" style="font-size:11px;width:90px">Subscription</div>
+              <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:93%;background:var(--purple)"></div></div>
+              <div class="fraud-type-pct" style="color:var(--purple)">0.93</div>
+            </div>
+            <div class="fraud-type-row">
+              <div class="fraud-type-label" style="font-size:11px;width:90px">Wangiri</div>
+              <div class="fraud-bar-wrap"><div class="fraud-bar-fill" style="width:96%;background:var(--blue)"></div></div>
+              <div class="fraud-type-pct" style="color:var(--blue)">0.96</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHAP Explainability -->
+      <div class="card">
+        <div class="card-title"><span class="dot dot-orange"></span>SHAP Feature Importance — SIM Box Event</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px;font-family:'Space Mono',monospace">Account +254712***421 · Fraud Score: 0.96</div>
+        <div class="shap-list">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-bottom:4px;font-family:'Space Mono',monospace"><span>Feature</span><span>SHAP Value (pushes fraud ↑↓)</span></div>
+          <div class="shap-row"><div class="shap-feat">intl_call_volume_1h</div><div class="shap-bar-wrap"><div class="shap-fill pos" style="width:92%"></div></div><div class="shap-val" style="color:var(--red)">+0.41</div></div>
+          <div class="shap-row"><div class="shap-feat">avg_call_duration</div><div class="shap-bar-wrap"><div class="shap-fill pos" style="width:78%"></div></div><div class="shap-val" style="color:var(--red)">+0.35</div></div>
+          <div class="shap-row"><div class="shap-feat">repeat_dest_ratio</div><div class="shap-bar-wrap"><div class="shap-fill pos" style="width:65%"></div></div><div class="shap-val" style="color:var(--red)">+0.29</div></div>
+          <div class="shap-row"><div class="shap-feat">active_hours_score</div><div class="shap-bar-wrap"><div class="shap-fill pos" style="width:55%"></div></div><div class="shap-val" style="color:var(--red)">+0.24</div></div>
+          <div class="shap-row"><div class="shap-feat">baseline_deviation</div><div class="shap-bar-wrap"><div class="shap-fill pos" style="width:44%"></div></div><div class="shap-val" style="color:var(--red)">+0.19</div></div>
+          <div class="shap-row"><div class="shap-feat">account_age_days</div><div class="shap-bar-wrap"><div class="shap-fill neg" style="width:30%"></div></div><div class="shap-val" style="color:var(--blue)">−0.13</div></div>
+          <div class="shap-row"><div class="shap-feat">id_verified</div><div class="shap-bar-wrap"><div class="shap-fill neg" style="width:18%"></div></div><div class="shap-val" style="color:var(--blue)">−0.08</div></div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:rgba(255,77,109,0.07);border:1px solid rgba(255,77,109,0.2);border-radius:8px;font-size:11px;color:var(--text-dim)">
+          <span style="color:var(--red);font-weight:700">Recommended Action:</span> Immediately suspend account and flag for manual review. Block destination prefix cluster.
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Recent Flagged Accounts Table -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px"><span class="dot dot-blue"></span>Recent Flagged Accounts</div>
+        <button class="btn btn-ghost" style="font-size:11px">View All →</button>
+      </div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Account ID</th>
+            <th>Fraud Type</th>
+            <th>Confidence Score</th>
+            <th>Detected</th>
+            <th>Key Signal</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-family:'Space Mono',monospace;color:var(--accent);font-size:11px">+254712***421</td>
+            <td><span class="fraud-tag tag-sim">SIM BOX</span></td>
+            <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:96%;background:var(--red)"></div></div><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--red)">0.96</span></div></td>
+            <td class="time-label">Today 09:14</td>
+            <td style="font-size:11px;color:var(--text-dim)">847 intl calls/hr, 3s avg duration</td>
+            <td><span style="color:var(--red);font-size:11px;font-weight:700">● OPEN</span></td>
+            <td><button class="btn btn-primary" style="font-size:10px;padding:4px 10px">Investigate</button></td>
+          </tr>
+          <tr>
+            <td style="font-family:'Space Mono',monospace;color:var(--accent);font-size:11px">SMS-BATCH#4471</td>
+            <td><span class="fraud-tag tag-smish">SMISHING</span></td>
+            <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:89%;background:var(--orange)"></div></div><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--orange)">0.89</span></div></td>
+            <td class="time-label">Today 09:08</td>
+            <td style="font-size:11px;color:var(--text-dim)">1,240 SMS, shortened URLs x3</td>
+            <td><span style="color:var(--orange);font-size:11px;font-weight:700">● REVIEW</span></td>
+            <td><button class="btn btn-primary" style="font-size:10px;padding:4px 10px">Investigate</button></td>
+          </tr>
+          <tr>
+            <td style="font-family:'Space Mono',monospace;color:var(--accent);font-size:11px">DEV-98A:2F:C1</td>
+            <td><span class="fraud-tag tag-sub">SUBSCRIPTION</span></td>
+            <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:94%;background:var(--purple)"></div></div><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--purple)">0.94</span></div></td>
+            <td class="time-label">Today 09:02</td>
+            <td style="font-size:11px;color:var(--text-dim)">6 activations in 4 min, same device</td>
+            <td><span style="color:var(--red);font-size:11px;font-weight:700">● OPEN</span></td>
+            <td><button class="btn btn-primary" style="font-size:10px;padding:4px 10px">Investigate</button></td>
+          </tr>
+          <tr>
+            <td style="font-family:'Space Mono',monospace;color:var(--accent);font-size:11px">+881-CLSTR-07</td>
+            <td><span class="fraud-tag tag-wan">WANGIRI</span></td>
+            <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:77%;background:var(--blue)"></div></div><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--blue)">0.77</span></div></td>
+            <td class="time-label">Today 08:45</td>
+            <td style="font-size:11px;color:var(--text-dim)">320 missed calls, premium prefix</td>
+            <td><span style="color:var(--green);font-size:11px;font-weight:700">● CLOSED</span></td>
+            <td><button class="btn btn-ghost" style="font-size:10px;padding:4px 10px">View</button></td>
+          </tr>
+          <tr>
+            <td style="font-family:'Space Mono',monospace;color:var(--accent);font-size:11px">ACC-#99812</td>
+            <td><span class="fraud-tag tag-sim">SIM BOX</span></td>
+            <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:61%;background:var(--red)"></div></div><span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)">0.61</span></div></td>
+            <td class="time-label">Today 08:14</td>
+            <td style="font-size:11px;color:var(--text-dim)">30-day baseline deviation, low hrs</td>
+            <td><span style="color:var(--orange);font-size:11px;font-weight:700">● WATCH</span></td>
+            <td><button class="btn btn-ghost" style="font-size:10px;padding:4px 10px">View</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Live clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
+    document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('en-GB');
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Sidebar navigation
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // Nav buttons
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Animate KPI counter on load
+  function animateValue(el, end) {
+    let start = 0, duration = 1200;
+    let step = Math.ceil(end / (duration / 16));
+    let timer = setInterval(() => {
+      start += step;
+      if (start >= end) { el.textContent = end; clearInterval(timer); }
+      else el.textContent = start;
+    }, 16);
+  }
+  animateValue(document.getElementById('kpi1'), 31);
+
+  // Periodically flash a "new alert" simulation
+  let alertCount = 0;
+  setInterval(() => {
+    alertCount++;
+    const feed = document.getElementById('alertFeed');
+    const types = [
+      { cls:'crit', badge:'badge-crit', label:'CRITICAL', title:'SIM Box — New anomaly detected', meta:'Just now · High volume intl calls', score:'0.93', col:'var(--red)' },
+      { cls:'high', badge:'badge-high', label:'HIGH', title:'Smishing — Bulk SMS batch detected', meta:'Just now · 980 messages flagged', score:'0.85', col:'var(--orange)' },
+    ];
+    if (alertCount % 8 === 0) {
+      const t = types[Math.floor(Math.random() * types.length)];
+      const div = document.createElement('div');
+      div.className = `alert-item ${t.cls}`;
+      div.innerHTML = `<div class="alert-badge ${t.badge}">${t.label}</div><div class="alert-content"><div class="alert-title">${t.title}</div><div class="alert-meta">${t.meta}</div></div><div class="alert-score" style="color:${t.col}">${t.score}</div>`;
+      feed.insertBefore(div, feed.firstChild);
+      if (feed.children.length > 5) feed.removeChild(feed.lastChild);
+    }
+  }, 1000);
+</script>
+</body>
+</html>
